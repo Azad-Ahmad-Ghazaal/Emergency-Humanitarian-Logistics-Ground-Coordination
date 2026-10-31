@@ -16,42 +16,49 @@ load_dotenv()
 st.set_page_config(page_title="ReliefLens | Disaster Coordination", page_icon="🆘", layout="wide")
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-:root { --rl-bg:#071525; --rl-panel:#10263b; --rl-line:rgba(132,190,211,.20); --rl-teal:#39dfc0; }
-.stApp {background:radial-gradient(ellipse at 15% 0%,#153b50 0%,transparent 38%),linear-gradient(145deg,#071525 0%,#0b1d30 58%,#10283a 100%); color:#eef5fb; font-family:'DM Sans',sans-serif;}
-.block-container {padding-top:1.35rem; padding-bottom:2rem; max-width:1450px;}
-h1,h2,h3 {color:#f5f9ff !important; letter-spacing:-.025em;}
-h1 {font-size:2.55rem !important; font-weight:800 !important;}
-h2 {font-size:1.55rem !important; font-weight:750 !important;}
-h3 {font-size:1.15rem !important; font-weight:700 !important;}
-p, label, .stMarkdown {color:#d8e5ef;}
-[data-testid="stMetric"] {background:linear-gradient(145deg,rgba(24,55,76,.94),rgba(14,35,54,.94)); border:1px solid var(--rl-line); padding:17px 19px; border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.13);}
-[data-testid="stMetricLabel"] {color:#a9c3d6; font-weight:600;}
-[data-testid="stMetricValue"] {color:var(--rl-teal); font-weight:800;}
-[data-testid="stMetricDelta"] {color:#a8d8cf;}
-.stTabs [data-baseweb="tab-list"] {gap:9px; border-bottom:1px solid var(--rl-line);}
-.stTabs [data-baseweb="tab"] {height:48px; padding:0 18px; border-radius:11px 11px 0 0; color:#b9cbd9; font-weight:700;}
-.stTabs [aria-selected="true"] {background:rgba(57,223,192,.12); color:#65efd3 !important;}
-input,textarea,[data-baseweb="select"] > div {background-color:#10263b !important; border-color:#31516a !important; border-radius:10px !important; color:#f3f8fc !important;}
-[data-testid="stFileUploader"] section {background:rgba(16,38,59,.7); border:1px dashed #477086; border-radius:13px;}
-div.stButton > button, div.stDownloadButton > button, div.stFormSubmitButton > button {border-radius:11px; min-height:42px; font-weight:700; border:1px solid #37657a; background:#15364a; color:#eaf7f5; transition:all .15s ease;}
-div.stButton > button[kind="primary"], div.stFormSubmitButton > button[kind="primary"] {background:linear-gradient(100deg,#008f83,#10b99c); border:0; color:white; box-shadow:0 6px 18px rgba(0,185,156,.18);}
-div.stButton > button:hover, div.stDownloadButton > button:hover {border-color:#4de2c4; color:#fff;}
-[data-testid="stDataFrame"] {border:1px solid var(--rl-line); border-radius:13px; overflow:hidden;}
-[data-testid="stAlert"] {border-radius:12px; border:1px solid var(--rl-line);}
-hr {border-color:var(--rl-line);}
-small,.stCaption {color:#9db4c6 !important;}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap');
+:root{--ink:#14283d;--muted:#64788b;--teal:#087f78;--teal2:#0fa99a;--line:#dce6ed;--surface:#ffffff;--canvas:#f3f7fa;}
+.stApp{background:var(--canvas);color:var(--ink);font-family:'DM Sans',sans-serif}
+[data-testid="stHeader"]{background:rgba(243,247,250,.88)}
+.block-container{max-width:1480px;padding:1.6rem 2.1rem 3rem}
+h1,h2,h3{font-family:'Manrope','DM Sans',sans-serif;color:var(--ink)!important;letter-spacing:-.035em}
+h1{font-size:2.35rem!important;font-weight:800!important}
+h2{font-size:1.55rem!important;font-weight:800!important}
+h3{font-size:1.12rem!important;font-weight:750!important}
+p,label,.stMarkdown{color:#42586b}
+[data-testid="stCaptionContainer"] p,.stCaption{color:#71869a!important}
+[data-testid="stMetric"]{background:var(--surface);border:1px solid var(--line);border-radius:17px;padding:18px 20px;box-shadow:0 5px 18px rgba(22,48,69,.045)}
+[data-testid="stMetricLabel"]{color:#6c8193;font-weight:700;font-size:.83rem}
+[data-testid="stMetricValue"]{color:#087f78;font-weight:800;font-family:'Manrope',sans-serif}
+[data-testid="stMetricDelta"]{color:#168575}
+.stTabs [data-baseweb="tab-list"]{gap:8px;border-bottom:1px solid var(--line);background:#eaf0f4;padding:7px;border-radius:14px}
+.stTabs [data-baseweb="tab"]{height:43px;padding:0 17px;border-radius:10px;color:#607488;font-weight:750}
+.stTabs [aria-selected="true"]{background:#fff!important;color:#087f78!important;box-shadow:0 2px 8px rgba(20,40,61,.08)}
+input,textarea,[data-baseweb="select"]>div{background:#fff!important;border-color:#d5e0e8!important;border-radius:10px!important;color:#193149!important}
+[data-testid="stFileUploader"] section{background:#f8fbfd;border:1px dashed #9bb5c3;border-radius:14px}
+div.stButton>button,div.stDownloadButton>button,div.stFormSubmitButton>button{border-radius:10px;min-height:42px;font-weight:750;border:1px solid #cbd9e2;background:#fff;color:#29445a;transition:all .15s ease}
+div.stButton>button[kind="primary"],div.stFormSubmitButton>button[kind="primary"]{background:linear-gradient(105deg,#087f78,#10a99a);border:0;color:white;box-shadow:0 5px 14px rgba(8,127,120,.17)}
+div.stButton>button:hover,div.stDownloadButton>button:hover{border-color:#0fa99a;color:#087f78;transform:translateY(-1px)}
+[data-testid="stDataFrame"]{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:white}
+[data-testid="stAlert"]{border-radius:12px;border:1px solid var(--line)}
+[data-testid="stExpander"]{background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden}
+[data-testid="stExpander"] summary{font-weight:700;color:#203b50}
+[data-testid="stForm"]{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:0 5px 20px rgba(22,48,69,.04)}
+[data-testid="stRadio"] label{font-weight:600}
+hr{border-color:var(--line)}
 </style>
 """, unsafe_allow_html=True)
 init_db()
 st.markdown("""
-<div style="background:linear-gradient(112deg,rgba(18,55,75,.98),rgba(10,35,54,.96));border:1px solid rgba(89,220,199,.25);border-radius:22px;padding:26px 30px;margin:4px 0 18px 0;box-shadow:0 16px 36px rgba(0,0,0,.18)">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
-    <span style="font-size:30px">🆘</span><span style="font-size:29px;font-weight:800;letter-spacing:-1px;color:#f4fbff">ReliefLens</span>
-    <span style="margin-left:8px;padding:5px 11px;border-radius:20px;background:rgba(57,223,192,.13);color:#63ebd1;font-size:11px;font-weight:800;letter-spacing:1px">FIELD COORDINATION</span>
+<div style="position:relative;overflow:hidden;background:linear-gradient(115deg,#102c42 0%,#16475a 58%,#087f78 100%);border:1px solid rgba(255,255,255,.13);border-radius:23px;padding:30px 34px;margin:5px 0 22px;box-shadow:0 15px 35px rgba(17,48,68,.13)">
+  <div style="position:absolute;right:-35px;top:-95px;width:300px;height:300px;border:1px solid rgba(255,255,255,.12);border-radius:50%;box-shadow:0 0 0 34px rgba(255,255,255,.035),0 0 0 70px rgba(255,255,255,.025)"></div>
+  <div style="position:relative;display:flex;align-items:center;gap:11px;margin-bottom:12px">
+    <span style="font-size:29px">🆘</span><span style="font-family:Manrope,sans-serif;font-size:30px;font-weight:800;letter-spacing:-1.2px;color:#fff">ReliefLens</span>
+    <span style="margin-left:7px;padding:6px 11px;border:1px solid rgba(125,242,218,.3);border-radius:30px;background:rgba(125,242,218,.12);color:#9af3df;font-size:10px;font-weight:800;letter-spacing:1.3px">RESPONSE COMMAND</span>
   </div>
-  <div style="font-size:21px;font-weight:700;color:#e8f5fb;margin-bottom:7px">From field reports to clearer relief priorities.</div>
-  <div style="font-size:14px;line-height:1.6;color:#b7ccda;max-width:900px">Multilingual, offline-first decision support for organizing text reports, voice notes and field images into a prioritized incident board.</div>
+  <div style="position:relative;font-family:Manrope,sans-serif;font-size:23px;font-weight:800;letter-spacing:-.6px;color:#fff;margin-bottom:7px">See the signal. Prioritize the response.</div>
+  <div style="position:relative;font-size:14px;line-height:1.7;color:#d1e4e9;max-width:850px">A field coordination workspace that turns multilingual reports, voice notes and scene images into organized incidents for human review.</div>
+  <div style="position:relative;display:flex;gap:9px;flex-wrap:wrap;margin-top:19px"><span style="padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:#e9f7f7;font-size:11px;font-weight:700">● Offline-first storage</span><span style="padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:#e9f7f7;font-size:11px;font-weight:700">● Multilingual intake</span><span style="padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.1);color:#e9f7f7;font-size:11px;font-weight:700">● Human-verified triage</span></div>
 </div>
 """, unsafe_allow_html=True)
 with st.expander("⚠️ Prototype safety notice — please read"):
