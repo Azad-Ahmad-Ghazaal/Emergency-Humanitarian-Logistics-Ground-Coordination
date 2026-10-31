@@ -1,6 +1,6 @@
 # ReliefLens — Multilingual Disaster Relief & Ground Coordination
 
-Offline-first prototype for emergency field reporting when regional connectivity is unreliable. It accepts multilingual text, optionally analyses rescue-scene photos, prioritizes reports, and stores incidents in a local SQLite register.
+Offline-first prototype for emergency field reporting when regional connectivity is unreliable. It accepts multilingual text, optionally analyses rescue-scene photos or extracts legible text from handwritten shelter charts, prioritizes reports, and stores incidents in a local SQLite register.
 
 > Safety: This is a decision-support prototype, not an emergency dispatch system or structural-engineering assessment. Human responders must verify every alert.
 
@@ -44,6 +44,10 @@ Official guide: https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api
 
 The Gemini API adapter uploads the selected image with the Google GenAI SDK and sends it to the same Gemma 4 model used for text. Local mode instead passes the image directly to Ollama. These are separate execution paths.
 
+## Handwritten shelter chart extraction
+
+The photo intake form offers a separate handwritten shelter chart / chalkboard mode. It sends the image to the selected Gemma 4 engine with a conservative transcription prompt that preserves the original script, marks unreadable spans as `[UNCLEAR]`, and separates uncertain readings from legible quantities. This is multimodal model-based extraction, not a dedicated OCR engine; handwriting, chalk, glare, and low-resolution images can cause errors. A human volunteer must verify every extracted item before it is treated as a report.
+
 ## Offline voice memo transcription
 
 An optional local CPU transcription path is available through `faster-whisper`. Install it separately with `pip install -r requirements-audio.txt`; upload a WAV, MP3, M4A, OGG, or FLAC voice memo in the field-report form. The default model is Whisper `base` with CPU `int8` inference (configurable via `WHISPER_MODEL` and `WHISPER_COMPUTE_TYPE`). The first run downloads model weights, so pre-cache them before going offline. Transcription quality varies by dialect, noise, and speaker; volunteers must review the transcript before treating it as a factual report.
@@ -61,7 +65,7 @@ Gemma output is parsed into priority, summary, action, and evidence signals. If 
 - Snowflake CoCo: workflow assets are in `snowflake/COCO_PROMPTS.md` and `snowflake/relieflens_infrastructure_template.sql`. CoCo must inspect a real Marketplace listing and adapt/run the SQL against verified schemas. No live Snowflake account or Marketplace query has been executed from this repository yet.
 - Solana Agent Registry: NOT registered yet. Add the public agent profile and transaction/signature link only after successful on-chain registration. Never commit private keys or seed phrases.
 - GitHub Copilot: evidence pending. Add genuine screenshots or sanitized logs showing the real Copilot prompt, response, and resulting code/debugging outcome. Do not fabricate evidence.
-- Handwritten chart OCR: not integrated yet; the Gemma image path can provide visual observations, but no dedicated handwriting extraction workflow is claimed.
+- Handwritten shelter chart extraction: a Gemma 4 multimodal prompt is available in the photo intake flow. It is not a dedicated OCR engine and requires human verification.
 
 ## Tests
 
