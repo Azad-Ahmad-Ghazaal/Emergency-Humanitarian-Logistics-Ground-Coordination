@@ -1,0 +1,39 @@
+name: Gemini API smoke test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-gemini:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Google GenAI SDK
+        run: python -m pip install --upgrade google-genai
+
+      - name: Verify Gemma 4 API access
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMMA_GEMINI_MODEL: gemma-4-26b-a4b-it
+        run: |
+          python - <<'PY'
+          import os
+          from google import genai
+
+          key = os.environ.get("GEMINI_API_KEY")
+          if not key:
+              raise SystemExit("GEMINI_API_KEY secret is missing or unavailable to this workflow.")
+
+          client = genai.Client(api_key=key)
+          response = client.models.generate_content(
+              model=os.environ["GEMMA_GEMINI_MODEL"],
+              contents="Reply with exactly: ReliefLens API connection OK",
+          )
+          print("Gemma 4 API responded successfully.")
+          print("Model:", os.environ["GEMMA_GEMINI_MODEL"])
+          print("Response received:", bool(response.text))
+          PY
