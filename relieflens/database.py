@@ -22,14 +22,28 @@ def init_db(db_path=DB_PATH):
         conn.commit()
 
 def add_incident(data, db_path=DB_PATH):
+    # Validate and bound untrusted model/user fields before persistence.
+    location = str(data.get("location") or "").strip()
+    report = str(data.get("report") or "").strip()
+    if not location:
+        raise ValueError("Incident location is required.")
+    if not report:
+        raise ValueError("Incident report text is required.")
+    priority = str(data.get("priority") or "LOW").upper()
+    if priority not in {"CRITICAL", "HIGH", "MEDIUM", "LOW"}:
+        priority = "LOW"
+    raw_signals = data.get("signals", [])
+    if not isinstance(raw_signals, (list, tuple)):
+        raw_signals = []
+    signals = [str(item).strip()[:200] for item in raw_signals if str(item).strip()][:50]
     with connect(db_path) as conn:
         cur = conn.execute("""INSERT INTO incidents
         (reporter, location, language, report, priority, summary, recommended_action, signals_json, ai_method)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""", (
-            data.get("reporter", ""), data["location"], data.get("language", "Unknown"),
-            data["report"], data.get("priority", "LOW"), data.get("summary", ""),
-            data.get("recommended_action", ""), json.dumps(data.get("signals", []), ensure_ascii=False),
-            data.get("ai_method", "keyword_fallback")))
+            str(data.get("reporter", ""))[:120], location, str(data.get("language", "Unknown"))[:80],
+            report[:20000], priority, str(data.get("summary", ""))[:4000],
+            str(data.get("recommended_action", ""))[:2000], json.dumps(signals, ensure_ascii=False),
+            str(data.get("ai_method", "keyword_fallback"))[:80]))
         conn.commit()
         return cur.lastrowid
 
