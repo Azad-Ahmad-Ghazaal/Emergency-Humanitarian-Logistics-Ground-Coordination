@@ -95,7 +95,7 @@ with tab3:
 | Track | Status in this starter build |
 |---|---|
 | Local Gemma 4 | Ollama adapter for text and images; local model must be installed |
-| Gemini API Gemma 4 | Separate hosted text adapter; API key required |
+| Gemini API Gemma 4 | Hosted text and image adapter; API key + internet required |
 | Offline incident store | SQLite |
 | Multilingual reports | Original text passed to model; no forced translation |
 | Voice transcription | Not integrated yet |
@@ -104,8 +104,8 @@ with tab3:
 | Solana Agent Registry | Not registered yet |
 | Copilot evidence | Must be captured from actual Copilot use |
 """)
-    st.code("ollama pull gemma4:e4b\nstreamlit run app.py", language="bash")
-    st.info("Hosted mode: put GEMINI_API_KEY in .env. Local mode requires Ollama and a downloaded Gemma model.")
+    st.code("ollama pull gemma4:e2b\nstreamlit run app.py", language="bash")
+    st.info("Hosted mode: configure GEMINI_API_KEY in .env or your hosting provider secrets. Local mode requires Ollama and a downloaded Gemma model.")
 
 st.divider()
 st.caption("ReliefLens • Prototype for humanitarian coordination • Verify every alert with human responders.")
