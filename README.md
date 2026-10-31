@@ -13,6 +13,8 @@ python -m venv .venv
 # Windows: .venv\\Scripts\\activate
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
+# Optional offline voice transcription
+pip install -r requirements-audio.txt
 # Copy .env.example to .env
 ollama pull gemma4:e2b
 streamlit run app.py
@@ -42,6 +44,10 @@ Official guide: https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api
 
 The Gemini API adapter uploads the selected image with the Google GenAI SDK and sends it to the same Gemma 4 model used for text. Local mode instead passes the image directly to Ollama. These are separate execution paths.
 
+## Offline voice memo transcription
+
+An optional local CPU transcription path is available through `faster-whisper`. Install it separately with `pip install -r requirements-audio.txt`; upload a WAV, MP3, M4A, OGG, or FLAC voice memo in the field-report form. The default model is Whisper `base` with CPU `int8` inference (configurable via `WHISPER_MODEL` and `WHISPER_COMPUTE_TYPE`). The first run downloads model weights, so pre-cache them before going offline. Transcription quality varies by dialect, noise, and speaker; volunteers must review the transcript before treating it as a factual report.
+
 ## Offline data
 
 SQLite database relieflens_incidents.db is created on first launch. The incident board exports CSV and JSON. Protect devices and exported files because humanitarian reports may contain sensitive data.
@@ -52,10 +58,10 @@ Gemma output is parsed into priority, summary, action, and evidence signals. If 
 
 ## Challenge integrations and evidence
 
-- Snowflake CoCo: NOT integrated yet. Add the actual Marketplace dataset, schema, SQL query, result, and baseline-infrastructure comparison after a real run.
+- Snowflake CoCo: workflow assets are in `snowflake/COCO_PROMPTS.md` and `snowflake/relieflens_infrastructure_template.sql`. CoCo must inspect a real Marketplace listing and adapt/run the SQL against verified schemas. No live Snowflake account or Marketplace query has been executed from this repository yet.
 - Solana Agent Registry: NOT registered yet. Add the public agent profile and transaction/signature link only after successful on-chain registration. Never commit private keys or seed phrases.
 - GitHub Copilot: evidence pending. Add genuine screenshots or sanitized logs showing the real Copilot prompt, response, and resulting code/debugging outcome. Do not fabricate evidence.
-- Voice transcription and handwritten chart OCR: not integrated yet.
+- Handwritten chart OCR: not integrated yet; the Gemma image path can provide visual observations, but no dedicated handwriting extraction workflow is claimed.
 
 ## Tests
 
