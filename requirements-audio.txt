@@ -1,0 +1,2 @@
+# Optional add-on; install separately from requirements.txt
+faster-whisper>=1.1.0
