@@ -58,7 +58,7 @@ with tab1:
                         tmp.write(photo.getvalue())
                         temp_path = tmp.name
                     try:
-                        image_notes = analyze_image(temp_path)
+                        image_notes = analyze_image(temp_path, engine)
                     except Exception as exc:
                         image_notes = "Image analysis unavailable: " + str(exc)
                     finally:
