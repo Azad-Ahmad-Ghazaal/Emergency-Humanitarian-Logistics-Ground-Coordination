@@ -40,7 +40,13 @@ with tab1:
         photo = st.file_uploader("Photo (optional)", type=["png", "jpg", "jpeg"])
         photo_purpose = st.selectbox("Photo type", ["Rescue scene / damaged route", "Handwritten shelter chart / chalkboard"])
         audio = st.file_uploader("Voice memo (optional, offline transcription)", type=["wav", "mp3", "m4a", "ogg", "flac"])
-        engine = st.radio("Analysis engine", ["Local Gemma 4 (Ollama)", "Gemma 4 via Gemini API"], horizontal=True)
+        cloud_key_available = bool(os.getenv("GEMINI_API_KEY"))
+        try:
+            cloud_key_available = cloud_key_available or bool(st.secrets.get("GEMINI_API_KEY", ""))
+        except Exception:
+            pass
+        default_engine = 1 if cloud_key_available else 0
+        engine = st.radio("Analysis engine", ["Local Gemma 4 (Ollama)", "Gemma 4 via Gemini API"], index=default_engine, horizontal=True)
         submitted = st.form_submit_button("Analyse & save report", type="primary")
     if submitted:
         if not location.strip() or (not report.strip() and audio is None):
