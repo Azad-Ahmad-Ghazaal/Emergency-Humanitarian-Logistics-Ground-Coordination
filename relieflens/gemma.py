@@ -48,7 +48,13 @@ def _gemini_client():
     from google import genai
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is missing. Add it to your environment or .env file.")
+        try:
+            import streamlit as st
+            api_key = st.secrets.get("GEMINI_API_KEY", "")
+        except Exception:
+            api_key = ""
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is missing. Add it to your environment, .env file, or Streamlit secrets.")
     return genai.Client(api_key=api_key)
 
 def analyze_text(report, mode="Local Gemma 4 (Ollama)"):
