@@ -51,3 +51,18 @@ def list_incidents(db_path=DB_PATH):
     with connect(db_path) as conn:
         rows = conn.execute("SELECT * FROM incidents ORDER BY CASE priority WHEN 'CRITICAL' THEN 0 WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 ELSE 3 END, created_at DESC").fetchall()
         return [dict(row) for row in rows]
+
+
+def update_incident_status(incident_id, status, db_path=DB_PATH):
+    """Update the operational status of an incident using an allow-listed value."""
+    allowed = {"OPEN", "IN_PROGRESS", "RESOLVED"}
+    status = str(status).upper()
+    if status not in allowed:
+        raise ValueError("Unsupported incident status.")
+    with connect(db_path) as conn:
+        cur = conn.execute(
+            "UPDATE incidents SET status = ? WHERE id = ?",
+            (status, int(incident_id)),
+        )
+        conn.commit()
+        return cur.rowcount > 0
