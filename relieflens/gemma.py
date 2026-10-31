@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 SYSTEM_PROMPT = """You are ReliefLens, an emergency logistics information assistant.
 Preserve the report's original language. Return exactly these labels:
@@ -55,7 +54,7 @@ def analyze_text(report, mode="Local Gemma 4 (Ollama)"):
     client = _gemini_client()
     response = client.models.generate_content(
         model=os.getenv("GEMMA_GEMINI_MODEL", "gemma-4-26b-a4b-it"),
-        contents=SYSTEM_PROMPT + "\\n\\nINCIDENT REPORT:\\n" + report,
+        contents=SYSTEM_PROMPT + "\n\nINCIDENT REPORT:\n" + report,
     )
     return _parse(response.text, "gemini_api_gemma4")
 
