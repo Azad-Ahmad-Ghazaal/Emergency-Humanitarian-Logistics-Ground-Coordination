@@ -2,6 +2,11 @@ name: Gemini API smoke test
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feat/relieflens-disaster-hub
+    paths:
+      - .github/workflows/gemini-smoke.yml
 
 jobs:
   verify-gemini:
