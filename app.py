@@ -8,7 +8,8 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from relieflens.audio import transcribe_audio
-from relieflens.database import add_incident, init_db, list_incidents, update_incident_status
+from relieflens.database import (add_incident, init_db, list_incidents, update_incident_status,
+    list_resources, save_resource, delete_resource, find_possible_duplicates)
 from relieflens.gemma import analyze_image, analyze_text
 from relieflens.triage import triage_text
 
@@ -73,7 +74,7 @@ c2.metric("Critical", sum(x["priority"] == "CRITICAL" for x in incidents))
 c3.metric("High", sum(x["priority"] == "HIGH" for x in incidents))
 c4.metric("Open", sum(x["status"] == "OPEN" for x in incidents))
 
-tab1, tab2, tab3 = st.tabs(["➕ New field report", "🗺️ Incident board", "🔧 Integrations"])
+tab1, tab2, tab3, tab4 = st.tabs(["➕ New field report", "🗺️ Incident board", "📦 Resources", "🔧 Integrations"])
 with tab1:
     st.subheader("New field report")
     st.caption("Add the location and report first. Attach a photo or voice memo when available.")
@@ -81,6 +82,9 @@ with tab1:
         a, b = st.columns(2)
         reporter = a.text_input("Volunteer / team ID (optional)")
         location = b.text_input("Location / landmark *")
+        geo1, geo2 = st.columns(2)
+        latitude = geo1.number_input("Latitude (optional)", min_value=-90.0, max_value=90.0, value=0.0, format="%.6f")
+        longitude = geo2.number_input("Longitude (optional)", min_value=-180.0, max_value=180.0, value=0.0, format="%.6f")
         language = st.selectbox("Report language", ["Auto-detect", "Urdu", "English", "Punjabi", "Pashto", "Sindhi", "Other"])
         report = st.text_area("Raw field report *", height=150, placeholder="Paste field notes or a voice transcription. Preserve original wording.")
         photo = st.file_uploader("Photo (optional)", type=["png", "jpg", "jpeg"])
@@ -145,10 +149,15 @@ with tab1:
                     finally:
                         Path(temp_path).unlink(missing_ok=True)
                 record = {**result, "reporter": reporter, "location": location.strip(),
-                          "language": result.get("language", language), "report": report}
+                          "language": result.get("language", language), "report": report,
+                          "latitude": latitude if latitude != 0.0 and longitude != 0.0 else None,
+                          "longitude": longitude if latitude != 0.0 and longitude != 0.0 else None}
                 if image_notes:
                     record["summary"] = record.get("summary", "") + "\nIMAGE OBSERVATIONS: " + image_notes
+                possible_duplicates = find_possible_duplicates(location.strip(), report)
                 incident_id = add_incident(record)
+            if possible_duplicates:
+                st.warning("Possible duplicate reports found at this location. They were not merged; review incident(s): " + ", ".join("#" + str(x["id"]) for x in possible_duplicates))
             st.success("Report saved locally as incident #" + str(incident_id))
             st.markdown("**Priority:** " + record["priority"])
             st.write(record.get("summary"))
@@ -210,6 +219,14 @@ with tab2:
             filtered = filtered[filtered["status"] == status_filter]
 
         st.caption(f"Showing {len(filtered)} of {len(df)} incidents • Highest priority first")
+        geo = filtered.dropna(subset=["latitude", "longitude"]).copy() if {"latitude", "longitude"}.issubset(filtered.columns) else pd.DataFrame()
+        geo = geo[(geo["latitude"] != 0) & (geo["longitude"] != 0)] if not geo.empty else geo
+        with st.expander("📍 Incident map", expanded=True):
+            if not geo.empty:
+                st.map(geo.rename(columns={"latitude": "lat", "longitude": "lon"})[["lat", "lon"]], use_container_width=True)
+                st.caption(f"Showing {len(geo)} geotagged reports. Pins use reporter-supplied GPS coordinates.")
+            else:
+                st.info("No GPS-tagged incidents yet. Add latitude and longitude when submitting a field report.")
         if not filtered.empty:
             st.dataframe(
                 filtered[["id", "created_at", "location", "language", "priority", "summary", "status", "ai_method"]],
@@ -270,6 +287,52 @@ with tab2:
         st.info("No reports yet. Submit a field report or load clearly labelled demo incidents for your presentation.")
 
 with tab3:
+    st.subheader("Relief resource inventory")
+    st.caption("Track supplies and equipment by category and storage location. Stock quantities are manually maintained.")
+    resources = list_resources()
+    if resources:
+        rdf = pd.DataFrame(resources)
+        rc1, rc2, rc3 = st.columns(3)
+        rc1.metric("Tracked resource types", len(resources))
+        rc2.metric("Total units recorded", int(rdf["quantity"].sum()))
+        rc3.metric("Categories", int(rdf["category"].nunique()))
+        st.dataframe(rdf[["id", "name", "category", "quantity", "unit", "location", "updated_at"]], use_container_width=True, hide_index=True)
+        st.download_button("⬇ Export resource inventory CSV", rdf.to_csv(index=False).encode("utf-8"), "relieflens_resources.csv", "text/csv")
+    else:
+        st.info("No resources recorded yet. Add your first stock entry below.")
+    st.markdown("#### Add stock")
+    with st.form("resource_form"):
+        rn = st.text_input("Resource name", placeholder="Drinking water")
+        rcat = st.selectbox("Category", ["Water", "Food", "Medicine", "Shelter", "Rescue equipment", "Transport", "Other"])
+        rq = st.number_input("Available quantity", min_value=0, max_value=1000000, value=0, step=1)
+        ru = st.text_input("Unit", value="items")
+        rl = st.text_input("Storage / location", placeholder="Warehouse, district, shelter...")
+        resource_submit = st.form_submit_button("Save resource stock", type="primary")
+    if resource_submit:
+        if not rn.strip():
+            st.error("Please enter a resource name.")
+        else:
+            save_resource(rn, rcat, int(rq), ru, rl)
+            st.success("Resource stock saved.")
+            st.rerun()
+    if resources:
+        with st.expander("Edit or remove stock"):
+            selected_resource = st.selectbox("Select resource ID", [x["id"] for x in resources])
+            selected = next(x for x in resources if x["id"] == selected_resource)
+            with st.form("edit_resource_form"):
+                eq = st.number_input("Corrected quantity", min_value=0, max_value=1000000, value=int(selected["quantity"]), step=1)
+                el = st.text_input("Corrected location", value=selected["location"])
+                edit_submit = st.form_submit_button("Update stock")
+            if edit_submit:
+                save_resource(selected["name"], selected["category"], int(eq), selected["unit"], el, selected_resource)
+                st.success("Stock updated.")
+                st.rerun()
+            if st.button("Delete selected resource"):
+                delete_resource(selected_resource)
+                st.success("Resource entry deleted.")
+                st.rerun()
+
+with tab4:
     st.subheader("System integrations")
     st.markdown("""
 | Track | Status in this starter build |
@@ -277,6 +340,10 @@ with tab3:
 | Local Gemma 4 | Ollama adapter for text and images; local model must be installed |
 | Gemini API Gemma 4 | Hosted text and image adapter; API key + internet required |
 | Offline incident store | SQLite |
+| Incident geolocation | Optional reporter-supplied GPS coordinates and map pins |
+| Resource inventory | SQLite stock tracking with CSV export |
+| Duplicate report hints | Same-location text similarity warning; manual review only |
+| Incident timeline | Creation and latest status-update timestamps |
 | Multilingual reports | Original text passed to model; no forced translation |
 | Voice transcription | Optional local faster-whisper CPU add-on; install requirements-audio.txt |
 | Handwritten chart extraction | Gemma 4 image prompt for legible transcription; human verification required |
