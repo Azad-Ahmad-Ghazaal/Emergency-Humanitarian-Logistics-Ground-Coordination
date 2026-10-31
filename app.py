@@ -8,7 +8,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from relieflens.audio import transcribe_audio
-from relieflens.database import add_incident, init_db, list_incidents
+from relieflens.database import add_incident, init_db, list_incidents, update_incident_status
 from relieflens.gemma import analyze_image, analyze_text
 from relieflens.triage import triage_text
 
@@ -156,7 +156,7 @@ with tab1:
 
 with tab2:
     st.subheader("Incident command board")
-    st.caption("Review urgent reports, search locations, and export the incident register.")
+    st.caption("Filter incoming reports, inspect field details, and track response progress.")
     demo_col, refresh_col = st.columns([3, 1])
     with demo_col:
         if st.button("＋ Load 3 demo incidents", help="Adds clearly labelled sample records for your presentation demo."):
@@ -172,26 +172,93 @@ with tab2:
     with refresh_col:
         if st.button("↻ Refresh board"):
             st.rerun()
+
     if incidents:
         df = pd.DataFrame(incidents)
-        f1, f2 = st.columns([2, 1])
-        search_term = f1.text_input("Search by location or summary", placeholder="e.g. flood, school, road")
-        priority_filter = f2.selectbox("Priority filter", ["All", "CRITICAL", "HIGH", "MEDIUM", "LOW"])
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Awaiting response", int((df["status"] == "OPEN").sum()))
+        m2.metric("Teams working", int((df["status"] == "IN_PROGRESS").sum()))
+        m3.metric("Resolved", int((df["status"] == "RESOLVED").sum()))
+
+        with st.expander("📊 Priority overview", expanded=False):
+            priority_counts = (df["priority"].value_counts()
+                               .reindex(["CRITICAL", "HIGH", "MEDIUM", "LOW"], fill_value=0))
+            st.bar_chart(priority_counts, horizontal=True, height=190)
+
+        f1, f2, f3 = st.columns([2, 1, 1])
+        search_term = f1.text_input("Search incidents", placeholder="Location, report, signal...")
+        priority_filter = f2.selectbox("Priority", ["All", "CRITICAL", "HIGH", "MEDIUM", "LOW"])
+        status_filter = f3.selectbox("Response status", ["All", "OPEN", "IN_PROGRESS", "RESOLVED"])
+        filtered = df.copy()
         if search_term:
-            mask = (df["location"].fillna("").str.contains(search_term, case=False) |
-                    df["summary"].fillna("").str.contains(search_term, case=False))
-            df = df[mask]
+            mask = (
+                filtered["location"].fillna("").str.contains(search_term, case=False, na=False) |
+                filtered["summary"].fillna("").str.contains(search_term, case=False, na=False) |
+                filtered["report"].fillna("").str.contains(search_term, case=False, na=False)
+            )
+            filtered = filtered[mask]
         if priority_filter != "All":
-            df = df[df["priority"] == priority_filter]
-        if not df.empty:
-            st.dataframe(df[["id", "created_at", "location", "language", "priority", "summary", "status", "ai_method"]],
-                         use_container_width=True, hide_index=True)
+            filtered = filtered[filtered["priority"] == priority_filter]
+        if status_filter != "All":
+            filtered = filtered[filtered["status"] == status_filter]
+
+        st.caption(f"Showing {len(filtered)} of {len(df)} incidents • Highest priority first")
+        if not filtered.empty:
+            st.dataframe(
+                filtered[["id", "created_at", "location", "language", "priority", "summary", "status", "ai_method"]],
+                use_container_width=True, hide_index=True
+            )
+            st.markdown("#### Incident details & response tracking")
+            for _, incident in filtered.iterrows():
+                priority = str(incident.get("priority", "LOW"))
+                icon = {"CRITICAL":"🔴", "HIGH":"🟠", "MEDIUM":"🟡", "LOW":"🟢"}.get(priority, "⚪")
+                title = f"{icon} #{incident['id']} · {incident['location']} · {priority}"
+                with st.expander(title):
+                    left, right = st.columns([2, 1])
+                    with left:
+                        st.write("**Summary**")
+                        st.write(incident.get("summary") or "No summary available.")
+                        st.write("**Original field report**")
+                        st.write(incident.get("report") or "No report text.")
+                        st.write("**Recommended next step**")
+                        st.write(incident.get("recommended_action") or "Human review required.")
+                        signals = incident.get("signals_json", "[]")
+                        try:
+                            parsed_signals = json.loads(signals) if isinstance(signals, str) else signals
+                        except (TypeError, ValueError):
+                            parsed_signals = []
+                        st.caption("Signals: " + (", ".join(parsed_signals) if parsed_signals else "None recorded"))
+                    with right:
+                        st.caption(f"Reporter: {incident.get('reporter') or 'Not provided'}")
+                        st.caption(f"Language: {incident.get('language') or 'Unknown'}")
+                        st.caption(f"Analysis: {incident.get('ai_method') or 'Unknown'}")
+                        current_status = str(incident.get("status", "OPEN"))
+                        new_status = st.selectbox(
+                            "Update response status",
+                            ["OPEN", "IN_PROGRESS", "RESOLVED"],
+                            index=["OPEN", "IN_PROGRESS", "RESOLVED"].index(current_status)
+                                if current_status in ["OPEN", "IN_PROGRESS", "RESOLVED"] else 0,
+                            key=f"status_{incident['id']}"
+                        )
+                        if new_status != current_status and st.button(
+                            "Save status", key=f"save_status_{incident['id']}", type="primary"
+                        ):
+                            update_incident_status(int(incident["id"]), new_status)
+                            st.session_state["saved_notice"] = f"Incident #{incident['id']} status updated to {new_status}."
+                            st.rerun()
         else:
             st.info("No incidents match these filters.")
-        st.download_button("Export CSV", df.to_csv(index=False).encode("utf-8"),
-                           "relieflens_incidents.csv", "text/csv")
-        st.download_button("Export JSON", json.dumps(incidents, ensure_ascii=False, indent=2),
-                           "relieflens_incidents.json", "application/json")
+
+        export_col1, export_col2 = st.columns(2)
+        export_col1.download_button(
+            "⬇ Export filtered CSV", filtered.to_csv(index=False).encode("utf-8"),
+            "relieflens_incidents_filtered.csv", "text/csv", use_container_width=True
+        )
+        export_col2.download_button(
+            "⬇ Export all incidents (JSON)",
+            json.dumps(incidents, ensure_ascii=False, indent=2),
+            "relieflens_incidents.json", "application/json", use_container_width=True
+        )
     else:
         st.info("No reports yet. Submit a field report or load clearly labelled demo incidents for your presentation.")
 
