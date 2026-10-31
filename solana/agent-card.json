@@ -1,0 +1,20 @@
+{
+  "name": "ReliefLens Triage Agent",
+  "description": "Offline-first multilingual humanitarian field-report triage and coordination assistant. Provides decision support only; trained responders verify all reports and actions.",
+  "url": "https://github.com/Azad-Ahmad-Ghazaal/Emergency-Humanitarian-Logistics-Ground-Coordination",
+  "version": "0.1.0",
+  "capabilities": [
+    "multilingual-field-report-triage",
+    "offline-voice-transcription",
+    "disaster-scene-image-observations",
+    "local-incident-record-management"
+  ],
+  "safety": {
+    "autonomous_dispatch": false,
+    "structural_safety_certification": false,
+    "human_verification_required": true
+  },
+  "contact": {
+    "repository": "https://github.com/Azad-Ahmad-Ghazaal/Emergency-Humanitarian-Logistics-Ground-Coordination"
+  }
+}
