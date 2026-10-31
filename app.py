@@ -35,7 +35,8 @@ with tab1:
         location = b.text_input("Location / landmark *")
         language = st.selectbox("Report language", ["Auto-detect", "Urdu", "English", "Punjabi", "Pashto", "Sindhi", "Other"])
         report = st.text_area("Raw field report *", height=150, placeholder="Paste field notes or a voice transcription. Preserve original wording.")
-        photo = st.file_uploader("Rescue-scene photo (optional)", type=["png", "jpg", "jpeg"])
+        photo = st.file_uploader("Photo (optional)", type=["png", "jpg", "jpeg"])
+        photo_purpose = st.selectbox("Photo type", ["Rescue scene / damaged route", "Handwritten shelter chart / chalkboard"])
         audio = st.file_uploader("Voice memo (optional, offline transcription)", type=["wav", "mp3", "m4a", "ogg", "flac"])
         engine = st.radio("Analysis engine", ["Local Gemma 4 (Ollama)", "Gemma 4 via Gemini API"], horizontal=True)
         submitted = st.form_submit_button("Analyse & save report", type="primary")
@@ -77,7 +78,7 @@ with tab1:
                         tmp.write(photo.getvalue())
                         temp_path = tmp.name
                     try:
-                        image_notes = analyze_image(temp_path, engine)
+                        image_notes = analyze_image(temp_path, engine, "chalkboard" if photo_purpose.startswith("Handwritten") else "scene")
                     except Exception as exc:
                         image_notes = "Image analysis unavailable: " + str(exc)
                     finally:
@@ -118,9 +119,9 @@ with tab3:
 | Offline incident store | SQLite |
 | Multilingual reports | Original text passed to model; no forced translation |
 | Voice transcription | Optional local faster-whisper CPU add-on; install requirements-audio.txt |
-| Handwritten chart OCR | Not integrated yet |
-| Snowflake CoCo | Not integrated yet |
-| Solana Agent Registry | Not registered yet |
+| Handwritten chart extraction | Gemma 4 image prompt for legible transcription; human verification required |
+| Snowflake CoCo | CoCo prompts and adaptable SQL templates committed; live account query pending |
+| Solana Agent Registry | Draft metadata and safe registration guide; on-chain registration pending |
 | Copilot evidence | Must be captured from actual Copilot use |
 """)
     st.code("ollama pull gemma4:e2b\npip install -r requirements-audio.txt\nstreamlit run app.py", language="bash")
