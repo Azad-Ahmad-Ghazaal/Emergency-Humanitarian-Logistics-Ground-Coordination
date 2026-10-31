@@ -14,9 +14,24 @@ from relieflens.triage import triage_text
 
 load_dotenv()
 st.set_page_config(page_title="ReliefLens | Disaster Coordination", page_icon="🆘", layout="wide")
+st.markdown("""
+<style>
+.stApp {background: linear-gradient(135deg,#071525 0%,#10263b 55%,#0b1b2c 100%); color:#eef5fb;}
+.block-container {padding-top:1.5rem; max-width:1400px;}
+h1,h2,h3 {color:#f4f8fc !important;}
+[data-testid="stMetric"] {background:rgba(255,255,255,.06); border:1px solid rgba(105,190,205,.22); padding:16px; border-radius:14px;}
+[data-testid="stMetricLabel"] {color:#a9c3d6;}
+[data-testid="stMetricValue"] {color:#55e0c5;}
+.stTabs [data-baseweb="tab"] {font-weight:650;}
+div.stButton > button[kind="primary"], div.stFormSubmitButton > button {background:#00a98f; border:0; color:white; font-weight:700; border-radius:10px;}
+div.stButton > button {border-radius:10px;}
+div[data-testid="stAlert"] {border-radius:12px;}
+</style>
+""", unsafe_allow_html=True)
 init_db()
 st.title("🆘 ReliefLens")
-st.caption("Offline-first multilingual disaster relief • Emergency logistics & ground coordination")
+st.markdown("### Multilingual field intelligence · Offline-first incident coordination")
+st.caption("Turn scattered field reports into clear, prioritized information for response teams.")
 st.warning("Prototype decision support only. Verify every report with trained responders. Never use this tool as the sole basis for rescue, evacuation, or structural-safety decisions.")
 
 incidents = list_incidents()
@@ -117,16 +132,44 @@ with tab1:
 
 with tab2:
     st.subheader("Ground coordination incident board")
+    st.caption("Review urgent reports, search locations, and export the incident register.")
+    demo_col, refresh_col = st.columns([3, 1])
+    with demo_col:
+        if st.button("＋ Load 3 demo incidents", help="Adds clearly labelled sample records for your presentation demo."):
+            samples = [
+                {"reporter":"DEMO-01","location":"Ravi River — Demo Sector","language":"Urdu","report":"DEMO DATA: Flood water is rising near 12 homes. Two elderly residents need evacuation support.","priority":"CRITICAL","summary":"DEMO: Rising flood water near homes; vulnerable residents may need urgent assistance.","recommended_action":"Verify water level and contact the local response team immediately.","signals":["flood","evacuation","vulnerable_people"],"ai_method":"demo_sample"},
+                {"reporter":"DEMO-02","location":"Main Link Road — Demo Sector","language":"English","report":"DEMO DATA: A fallen tree and debris are blocking the road used by relief vehicles.","priority":"HIGH","summary":"DEMO: Road obstruction may delay relief vehicle access.","recommended_action":"Confirm alternate access route with field responders.","signals":["road_blockage","access"],"ai_method":"demo_sample"},
+                {"reporter":"DEMO-03","location":"Community School — Demo Sector","language":"Punjabi","report":"DEMO DATA: Clean drinking water and blankets are needed for families at the temporary shelter.","priority":"MEDIUM","summary":"DEMO: Shelter requests drinking water and blankets.","recommended_action":"Confirm stock and coordinate a supply drop.","signals":["shelter","water","supplies"],"ai_method":"demo_sample"}
+            ]
+            for sample in samples:
+                add_incident(sample)
+            st.session_state["saved_notice"] = "3 demo incidents added. These are sample records, not live emergency reports."
+            st.rerun()
+    with refresh_col:
+        if st.button("↻ Refresh board"):
+            st.rerun()
     if incidents:
         df = pd.DataFrame(incidents)
-        st.dataframe(df[["id", "created_at", "location", "language", "priority", "summary", "status", "ai_method"]],
-                     use_container_width=True, hide_index=True)
+        f1, f2 = st.columns([2, 1])
+        search_term = f1.text_input("Search by location or summary", placeholder="e.g. flood, school, road")
+        priority_filter = f2.selectbox("Priority filter", ["All", "CRITICAL", "HIGH", "MEDIUM", "LOW"])
+        if search_term:
+            mask = (df["location"].fillna("").str.contains(search_term, case=False) |
+                    df["summary"].fillna("").str.contains(search_term, case=False))
+            df = df[mask]
+        if priority_filter != "All":
+            df = df[df["priority"] == priority_filter]
+        if not df.empty:
+            st.dataframe(df[["id", "created_at", "location", "language", "priority", "summary", "status", "ai_method"]],
+                         use_container_width=True, hide_index=True)
+        else:
+            st.info("No incidents match these filters.")
         st.download_button("Export CSV", df.to_csv(index=False).encode("utf-8"),
                            "relieflens_incidents.csv", "text/csv")
         st.download_button("Export JSON", json.dumps(incidents, ensure_ascii=False, indent=2),
                            "relieflens_incidents.json", "application/json")
     else:
-        st.info("No reports yet. Add a field report to populate the board.")
+        st.info("No reports yet. Submit a field report or load clearly labelled demo incidents for your presentation.")
 
 with tab3:
     st.subheader("Integration status")
