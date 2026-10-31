@@ -20,6 +20,8 @@ st.caption("Offline-first multilingual disaster relief • Emergency logistics &
 st.warning("Prototype decision support only. Verify every report with trained responders. Never use this tool as the sole basis for rescue, evacuation, or structural-safety decisions.")
 
 incidents = list_incidents()
+if st.session_state.get("saved_notice"):
+    st.success(st.session_state.pop("saved_notice"))
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Total reports", len(incidents))
 c2.metric("Critical", sum(x["priority"] == "CRITICAL" for x in incidents))
@@ -43,6 +45,12 @@ with tab1:
     if submitted:
         if not location.strip() or (not report.strip() and audio is None):
             st.error("Location and either report text or a voice memo are required.")
+        elif len(report) > 10000:
+            st.error("Report is too long. Please keep it under 10,000 characters.")
+        elif photo is not None and len(photo.getvalue()) > 10 * 1024 * 1024:
+            st.error("Photo is larger than 10 MB. Please upload a smaller image.")
+        elif audio is not None and len(audio.getvalue()) > 20 * 1024 * 1024:
+            st.error("Voice memo is larger than 20 MB. Please upload a smaller audio file.")
         else:
             if audio is not None:
                 with st.spinner("Transcribing voice memo locally..."):
@@ -72,6 +80,7 @@ with tab1:
                               "recommended_action": "Contact the local response coordinator and verify on the ground.",
                               "signals": fallback["signals"], "ai_method": "keyword_fallback"}
                 image_notes = ""
+                image_error = ""
                 if photo is not None:
                     suffix = Path(photo.name).suffix or ".jpg"
                     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -80,7 +89,7 @@ with tab1:
                     try:
                         image_notes = analyze_image(temp_path, engine, "chalkboard" if photo_purpose.startswith("Handwritten") else "scene")
                     except Exception as exc:
-                        image_notes = "Image analysis unavailable: " + str(exc)
+                        image_error = "Image analysis unavailable: " + str(exc)
                     finally:
                         Path(temp_path).unlink(missing_ok=True)
                 record = {**result, "reporter": reporter, "location": location.strip(),
@@ -93,8 +102,12 @@ with tab1:
             st.write(record.get("summary"))
             st.write("**Recommended next step:**", record.get("recommended_action"))
             if image_notes:
-                st.write("**Image observations:**", image_notes)
+                st.write("**Image observations (verify before use):**", image_notes)
+            if image_error:
+                st.warning(image_error + ". The text report was saved without image observations.")
             st.caption("Analysis method: " + record.get("ai_method", "unknown"))
+            st.session_state["saved_notice"] = "Report saved locally as incident #" + str(incident_id)
+            st.rerun()
 
 with tab2:
     st.subheader("Ground coordination incident board")
