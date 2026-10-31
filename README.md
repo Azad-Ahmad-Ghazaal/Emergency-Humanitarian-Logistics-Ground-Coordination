@@ -38,7 +38,11 @@ Implementation: relieflens/gemma.py, analyze_text() hosted branch.
 
 Official guide: https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api
 
-## Hosted image analysis\n\nThe Gemini API adapter uploads the selected image with the Google GenAI SDK and sends it to the same Gemma 4 model used for text. Local mode instead passes the image directly to Ollama. These are separate execution paths.\n\n## Offline data
+## Hosted image analysis
+
+The Gemini API adapter uploads the selected image with the Google GenAI SDK and sends it to the same Gemma 4 model used for text. Local mode instead passes the image directly to Ollama. These are separate execution paths.
+
+## Offline data
 
 SQLite database relieflens_incidents.db is created on first launch. The incident board exports CSV and JSON. Protect devices and exported files because humanitarian reports may contain sensitive data.
 
