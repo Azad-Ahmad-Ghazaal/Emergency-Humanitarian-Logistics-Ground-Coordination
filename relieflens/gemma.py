@@ -14,6 +14,16 @@ IMAGE_PROMPT = """Describe only visible disaster damage and access hazards in th
 Do not infer hidden damage, structural integrity, casualty counts, or safe passage.
 Separate direct observations from uncertainty. Human responders must verify on site."""
 
+CHALKBOARD_PROMPT = """Read this photograph of a handwritten emergency shelter chart or chalkboard.
+Transcribe only text and numbers that are visibly legible. Preserve the original language and script.
+Return:
+TRANSCRIPTION: line-by-line transcription; mark unreadable spans as [UNCLEAR]
+LANGUAGE: likely language(s), or UNKNOWN
+POSSIBLE_COUNTS: only clearly legible quantities, each tied to its visible label
+UNCERTAINTIES: list ambiguous characters, damaged/obscured areas, and uncertain readings
+Do not guess missing words, names, locations, quantities, medical details, or needs.
+Do not convert uncertain writing into facts. A human volunteer must verify every extracted item before operational use."""
+
 def _parse(raw, method):
     raw = raw or ""
     fields = {}
@@ -58,12 +68,13 @@ def analyze_text(report, mode="Local Gemma 4 (Ollama)"):
     )
     return _parse(response.text, "gemini_api_gemma4")
 
-def analyze_image(image_path, mode="Local Gemma 4 (Ollama)"):
+def analyze_image(image_path, mode="Local Gemma 4 (Ollama)", purpose="scene"):
+    prompt = CHALKBOARD_PROMPT if purpose == "chalkboard" else IMAGE_PROMPT
     if mode.startswith("Local"):
         import ollama
         response = ollama.chat(
             model=os.getenv("OLLAMA_MODEL", "gemma4:e2b"),
-            messages=[{"role": "user", "content": IMAGE_PROMPT,
+            messages=[{"role": "user", "content": prompt,
                        "images": [str(image_path)]}],
             options={"temperature": 0.1},
         )
@@ -73,6 +84,6 @@ def analyze_image(image_path, mode="Local Gemma 4 (Ollama)"):
     uploaded = client.files.upload(file=str(image_path))
     response = client.models.generate_content(
         model=os.getenv("GEMMA_GEMINI_MODEL", "gemma-4-26b-a4b-it"),
-        contents=[uploaded, IMAGE_PROMPT],
+        contents=[uploaded, prompt],
     )
     return response.text or "No image observations returned by Gemma 4."
