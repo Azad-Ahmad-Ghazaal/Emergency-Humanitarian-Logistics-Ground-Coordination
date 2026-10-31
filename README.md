@@ -67,6 +67,10 @@ Gemma output is parsed into priority, summary, action, and evidence signals. If 
 - GitHub Copilot: evidence pending. Add genuine screenshots or sanitized logs showing the real Copilot prompt, response, and resulting code/debugging outcome. Do not fabricate evidence.
 - Handwritten shelter chart extraction: a Gemma 4 multimodal prompt is available in the photo intake flow. It is not a dedicated OCR engine and requires human verification.
 
+## Hackathon demo
+
+A concise judge-facing walkthrough, sample incident, safety notes, and honest integration-status script are in [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
+
 ## Tests
 
 ```bash
