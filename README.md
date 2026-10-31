@@ -62,7 +62,7 @@ Gemma output is parsed into priority, summary, action, and evidence signals. If 
 
 ## Challenge integrations and evidence
 
-- Snowflake CoCo: workflow assets are in `snowflake/COCO_PROMPTS.md` and `snowflake/relieflens_infrastructure_template.sql`. CoCo must inspect a real Marketplace listing and adapt/run the SQL against verified schemas. No live Snowflake account or Marketplace query has been executed from this repository yet.
+- Snowflake CoCo: retained as an optional extension/reference only; it is not part of the current critical completion path. The `snowflake/` folder contains reusable prompts and a SQL template, but no live Marketplace query is claimed.
 - Solana Agent Registry: NOT registered yet. Add the public agent profile and transaction/signature link only after successful on-chain registration. Never commit private keys or seed phrases.
 - GitHub Copilot: evidence pending. Follow [`docs/COPILOT_EVIDENCE_GUIDE.md`](docs/COPILOT_EVIDENCE_GUIDE.md) to capture genuine screenshots or sanitized logs showing the real Copilot prompt, response, and resulting code/debugging outcome. Do not fabricate evidence.
 - Handwritten shelter chart extraction: a Gemma 4 multimodal prompt is available in the photo intake flow. It is not a dedicated OCR engine and requires human verification.
