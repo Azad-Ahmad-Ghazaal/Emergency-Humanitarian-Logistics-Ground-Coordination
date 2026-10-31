@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
+from relieflens.audio import transcribe_audio
 from relieflens.database import add_incident, init_db, list_incidents
 from relieflens.gemma import analyze_image, analyze_text
 from relieflens.triage import triage_text
@@ -35,12 +36,30 @@ with tab1:
         language = st.selectbox("Report language", ["Auto-detect", "Urdu", "English", "Punjabi", "Pashto", "Sindhi", "Other"])
         report = st.text_area("Raw field report *", height=150, placeholder="Paste field notes or a voice transcription. Preserve original wording.")
         photo = st.file_uploader("Rescue-scene photo (optional)", type=["png", "jpg", "jpeg"])
+        audio = st.file_uploader("Voice memo (optional, offline transcription)", type=["wav", "mp3", "m4a", "ogg", "flac"])
         engine = st.radio("Analysis engine", ["Local Gemma 4 (Ollama)", "Gemma 4 via Gemini API"], horizontal=True)
         submitted = st.form_submit_button("Analyse & save report", type="primary")
     if submitted:
-        if not location.strip() or not report.strip():
-            st.error("Location and report are required.")
+        if not location.strip() or (not report.strip() and audio is None):
+            st.error("Location and either report text or a voice memo are required.")
         else:
+            if audio is not None:
+                with st.spinner("Transcribing voice memo locally..."):
+                    audio_suffix = Path(audio.name).suffix or ".wav"
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=audio_suffix) as audio_tmp:
+                        audio_tmp.write(audio.getvalue())
+                        audio_path = audio_tmp.name
+                    try:
+                        transcript = transcribe_audio(audio_path)
+                        if not report.strip():
+                            report = transcript["text"]
+                        language = transcript["language"]
+                        st.info("Local voice transcription (" + transcript["language"] + "): " + transcript["text"])
+                    except Exception as exc:
+                        st.error("Voice transcription unavailable: " + str(exc))
+                        st.stop()
+                    finally:
+                        Path(audio_path).unlink(missing_ok=True)
             with st.spinner("Analysing field report..."):
                 try:
                     result = analyze_text(report, engine)
@@ -98,13 +117,13 @@ with tab3:
 | Gemini API Gemma 4 | Hosted text and image adapter; API key + internet required |
 | Offline incident store | SQLite |
 | Multilingual reports | Original text passed to model; no forced translation |
-| Voice transcription | Not integrated yet |
+| Voice transcription | Optional local faster-whisper CPU add-on; install requirements-audio.txt |
 | Handwritten chart OCR | Not integrated yet |
 | Snowflake CoCo | Not integrated yet |
 | Solana Agent Registry | Not registered yet |
 | Copilot evidence | Must be captured from actual Copilot use |
 """)
-    st.code("ollama pull gemma4:e2b\nstreamlit run app.py", language="bash")
+    st.code("ollama pull gemma4:e2b\npip install -r requirements-audio.txt\nstreamlit run app.py", language="bash")
     st.info("Hosted mode: configure GEMINI_API_KEY in .env or your hosting provider secrets. Local mode requires Ollama and a downloaded Gemma model.")
 
 st.divider()
