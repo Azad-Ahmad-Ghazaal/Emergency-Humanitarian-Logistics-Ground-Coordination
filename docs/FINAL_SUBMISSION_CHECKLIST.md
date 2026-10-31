@@ -15,7 +15,7 @@ This checklist separates repository work that is verifiably complete from challe
 
 - [ ] **Local Gemma 4 deployment:** run `ollama pull gemma4:e2b` and test a sample report on the target laptop. The hosted Gemini API smoke test is not proof of local deployment.
 - [ ] **Gemini multimodal image test:** run one real image through the hosted image path and retain a sanitized log or screenshot. The existing smoke test is text-only.
-- [ ] **Snowflake CoCo:** use an actual Snowflake account and Marketplace infrastructure dataset; have CoCo inspect the live schema, adapt the SQL template, execute it, and capture the query/result evidence. The committed SQL is a template, not a completed live integration.
+- [x] **Snowflake CoCo:** treated as an optional extension under the updated team plan; no live query is claimed or required for this submission path. Revisit only if the latest official challenge rubric still marks it mandatory.
 - [ ] **Solana Agent Registry:** register the agent using the owner's wallet, then add the public profile URL and transaction signature. Draft metadata is not registration. Never share or commit a seed phrase/private key.
 - [ ] **GitHub Copilot:** capture genuine screenshots or sanitized logs showing Copilot's actual prompt, response, and the code/debugging result. Do not fabricate this evidence.
 - [ ] **End-to-end UI demo:** run `streamlit run app.py`, submit one sample report, show the incident board, and export CSV/JSON. GitHub CI does not launch and visually verify the Streamlit UI.
@@ -26,9 +26,8 @@ This checklist separates repository work that is verifiably complete from challe
 2. Show the Streamlit report form and incident board with a sample report.
 3. Explain local Gemma vs hosted Gemini as two separate execution paths.
 4. Show the successful CI and hosted text smoke-test links.
-5. Show the Snowflake SQL template and CoCo prompts; clearly label live query evidence pending unless it has been captured.
-6. Show the Solana registration guide; provide the transaction link only after registration.
-7. Show genuine Copilot evidence only after it has been captured.
+5. Show the Solana registration guide; provide the transaction link only after registration.
+6. Show genuine Copilot evidence only after it has been captured.
 
 ## Safety and honesty
 
