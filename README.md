@@ -14,7 +14,7 @@ python -m venv .venv
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 # Copy .env.example to .env
-ollama pull gemma4:e4b
+ollama pull gemma4:e2b
 streamlit run app.py
 ```
 
@@ -23,7 +23,7 @@ streamlit run app.py
 ### Local Gemma 4 — Ollama
 
 Implementation: relieflens/gemma.py, analyze_text() local branch and analyze_image().
-- Uses Ollama local inference, default model gemma4:e4b (configurable with OLLAMA_MODEL).
+- Uses Ollama local inference, default model gemma4:e2b (configurable with OLLAMA_MODEL).
 - Processes report text and uploaded image inputs locally.
 - Once model weights are downloaded, local inference does not require a Gemini API key.
 - Download the model before deployment in a disconnected disaster area.
@@ -34,11 +34,11 @@ Implementation: relieflens/gemma.py, analyze_text() hosted branch.
 - Uses Google's official google-genai Python SDK.
 - Exact default model identifier: gemma-4-26b-a4b-it (configurable with GEMMA_GEMINI_MODEL).
 - Set GEMINI_API_KEY in .env.
-- This is a hosted API and is NOT offline. The current prototype uses this path for text; image analysis currently uses local Ollama.
+- This is a hosted API and is NOT offline. The hosted path supports both report text and uploaded image analysis. Image files are uploaded to the Gemini API for processing, so this path requires internet connectivity and should not be used for disconnected field operations.
 
 Official guide: https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api
 
-## Offline data
+## Hosted image analysis\n\nThe Gemini API adapter uploads the selected image with the Google GenAI SDK and sends it to the same Gemma 4 model used for text. Local mode instead passes the image directly to Ollama. These are separate execution paths.\n\n## Offline data
 
 SQLite database relieflens_incidents.db is created on first launch. The incident board exports CSV and JSON. Protect devices and exported files because humanitarian reports may contain sensitive data.
 
