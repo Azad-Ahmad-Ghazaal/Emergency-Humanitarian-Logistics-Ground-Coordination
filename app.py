@@ -16,23 +16,46 @@ load_dotenv()
 st.set_page_config(page_title="ReliefLens | Disaster Coordination", page_icon="🆘", layout="wide")
 st.markdown("""
 <style>
-.stApp {background: linear-gradient(135deg,#071525 0%,#10263b 55%,#0b1b2c 100%); color:#eef5fb;}
-.block-container {padding-top:1.5rem; max-width:1400px;}
-h1,h2,h3 {color:#f4f8fc !important;}
-[data-testid="stMetric"] {background:rgba(255,255,255,.06); border:1px solid rgba(105,190,205,.22); padding:16px; border-radius:14px;}
-[data-testid="stMetricLabel"] {color:#a9c3d6;}
-[data-testid="stMetricValue"] {color:#55e0c5;}
-.stTabs [data-baseweb="tab"] {font-weight:650;}
-div.stButton > button[kind="primary"], div.stFormSubmitButton > button {background:#00a98f; border:0; color:white; font-weight:700; border-radius:10px;}
-div.stButton > button {border-radius:10px;}
-div[data-testid="stAlert"] {border-radius:12px;}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+:root { --rl-bg:#071525; --rl-panel:#10263b; --rl-line:rgba(132,190,211,.20); --rl-teal:#39dfc0; }
+.stApp {background:radial-gradient(ellipse at 15% 0%,#153b50 0%,transparent 38%),linear-gradient(145deg,#071525 0%,#0b1d30 58%,#10283a 100%); color:#eef5fb; font-family:'DM Sans',sans-serif;}
+.block-container {padding-top:1.35rem; padding-bottom:2rem; max-width:1450px;}
+h1,h2,h3 {color:#f5f9ff !important; letter-spacing:-.025em;}
+h1 {font-size:2.55rem !important; font-weight:800 !important;}
+h2 {font-size:1.55rem !important; font-weight:750 !important;}
+h3 {font-size:1.15rem !important; font-weight:700 !important;}
+p, label, .stMarkdown {color:#d8e5ef;}
+[data-testid="stMetric"] {background:linear-gradient(145deg,rgba(24,55,76,.94),rgba(14,35,54,.94)); border:1px solid var(--rl-line); padding:17px 19px; border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.13);}
+[data-testid="stMetricLabel"] {color:#a9c3d6; font-weight:600;}
+[data-testid="stMetricValue"] {color:var(--rl-teal); font-weight:800;}
+[data-testid="stMetricDelta"] {color:#a8d8cf;}
+.stTabs [data-baseweb="tab-list"] {gap:9px; border-bottom:1px solid var(--rl-line);}
+.stTabs [data-baseweb="tab"] {height:48px; padding:0 18px; border-radius:11px 11px 0 0; color:#b9cbd9; font-weight:700;}
+.stTabs [aria-selected="true"] {background:rgba(57,223,192,.12); color:#65efd3 !important;}
+input,textarea,[data-baseweb="select"] > div {background-color:#10263b !important; border-color:#31516a !important; border-radius:10px !important; color:#f3f8fc !important;}
+[data-testid="stFileUploader"] section {background:rgba(16,38,59,.7); border:1px dashed #477086; border-radius:13px;}
+div.stButton > button, div.stDownloadButton > button, div.stFormSubmitButton > button {border-radius:11px; min-height:42px; font-weight:700; border:1px solid #37657a; background:#15364a; color:#eaf7f5; transition:all .15s ease;}
+div.stButton > button[kind="primary"], div.stFormSubmitButton > button[kind="primary"] {background:linear-gradient(100deg,#008f83,#10b99c); border:0; color:white; box-shadow:0 6px 18px rgba(0,185,156,.18);}
+div.stButton > button:hover, div.stDownloadButton > button:hover {border-color:#4de2c4; color:#fff;}
+[data-testid="stDataFrame"] {border:1px solid var(--rl-line); border-radius:13px; overflow:hidden;}
+[data-testid="stAlert"] {border-radius:12px; border:1px solid var(--rl-line);}
+hr {border-color:var(--rl-line);}
+small,.stCaption {color:#9db4c6 !important;}
 </style>
 """, unsafe_allow_html=True)
 init_db()
-st.title("🆘 ReliefLens")
-st.markdown("### Multilingual field intelligence · Offline-first incident coordination")
-st.caption("Turn scattered field reports into clear, prioritized information for response teams.")
-st.warning("Prototype decision support only. Verify every report with trained responders. Never use this tool as the sole basis for rescue, evacuation, or structural-safety decisions.")
+st.markdown("""
+<div style="background:linear-gradient(112deg,rgba(18,55,75,.98),rgba(10,35,54,.96));border:1px solid rgba(89,220,199,.25);border-radius:22px;padding:26px 30px;margin:4px 0 18px 0;box-shadow:0 16px 36px rgba(0,0,0,.18)">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+    <span style="font-size:30px">🆘</span><span style="font-size:29px;font-weight:800;letter-spacing:-1px;color:#f4fbff">ReliefLens</span>
+    <span style="margin-left:8px;padding:5px 11px;border-radius:20px;background:rgba(57,223,192,.13);color:#63ebd1;font-size:11px;font-weight:800;letter-spacing:1px">FIELD COORDINATION</span>
+  </div>
+  <div style="font-size:21px;font-weight:700;color:#e8f5fb;margin-bottom:7px">From field reports to clearer relief priorities.</div>
+  <div style="font-size:14px;line-height:1.6;color:#b7ccda;max-width:900px">Multilingual, offline-first decision support for organizing text reports, voice notes and field images into a prioritized incident board.</div>
+</div>
+""", unsafe_allow_html=True)
+with st.expander("⚠️ Prototype safety notice — please read"):
+    st.warning("Decision support only. Verify every report with trained responders. Never use this tool as the sole basis for rescue, evacuation, or structural-safety decisions.")
 
 incidents = list_incidents()
 if st.session_state.get("saved_notice"):
@@ -45,7 +68,8 @@ c4.metric("Open", sum(x["status"] == "OPEN" for x in incidents))
 
 tab1, tab2, tab3 = st.tabs(["➕ New field report", "🗺️ Incident board", "🔧 Integrations"])
 with tab1:
-    st.subheader("Submit a field report")
+    st.subheader("New field report")
+    st.caption("Add the location and report first. Attach a photo or voice memo when available.")
     with st.form("incident_form"):
         a, b = st.columns(2)
         reporter = a.text_input("Volunteer / team ID (optional)")
@@ -131,7 +155,7 @@ with tab1:
             st.rerun()
 
 with tab2:
-    st.subheader("Ground coordination incident board")
+    st.subheader("Incident command board")
     st.caption("Review urgent reports, search locations, and export the incident register.")
     demo_col, refresh_col = st.columns([3, 1])
     with demo_col:
@@ -172,7 +196,7 @@ with tab2:
         st.info("No reports yet. Submit a field report or load clearly labelled demo incidents for your presentation.")
 
 with tab3:
-    st.subheader("Integration status")
+    st.subheader("System integrations")
     st.markdown("""
 | Track | Status in this starter build |
 |---|---|
